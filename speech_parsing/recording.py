@@ -3,7 +3,7 @@ import wavio as wv
 import datetime
 
 freq = 44100
-duration = 5 # length of each audio file recording
+duration = 3 # length of each audio file recording
 
 print('Recording')
 
