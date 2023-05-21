@@ -1,0 +1,1 @@
+#how to make run all three python programs at once :/
