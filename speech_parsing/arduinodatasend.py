@@ -2,7 +2,7 @@ import serial
 import time
 
 # establish a serial connection with the Arduino
-ser = serial.Serial('/dev/cu.usbserial-1120', 9600)  # Replace with the appropriate port
+ser = serial.Serial('/dev/cu.usbserial-210', 9600)  # Replace with the appropriate port
 file_path = 'transcriptions/transcriptions.txt'
 previous_word = ""
 
@@ -14,7 +14,9 @@ while True:
     if result and result[-1] != previous_word:
         # send the new word using ser.write()
         ser.write(result[-1].encode())
-        previous_word = result[-1]  # update previous_word
+        print("writing", result[-1])
+    previous_word = result[-1]  # update previous_word
+
 
     time.sleep(0.5)  # wait for 1 second before checking for updates again
 
