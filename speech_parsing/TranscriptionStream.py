@@ -7,14 +7,17 @@ import io
 import time
 
 from ArduinoSend import ArduinoSend
+from Translator import Translator
 
 class TranscriptionStream():
-    def __init__(self, serial_port: str, baudrate= 9600, freq=44100, recording_duration=5, testing=False):
+    def __init__(self, serial_port: str, baudrate= 9600, freq=44100, recording_duration=5, testing=False, translation_language=None):
         self.freq = freq
         self.recording_duration = recording_duration
         self.testing = testing
         self.transcription_log = []
         self.arduino_sender = ArduinoSend(serial_port=serial_port, baudrate=baudrate)
+        self.translator = Translator(translation_language) if translation_language != None else None
+
 
     def _record_audio(self):
         # try:
@@ -43,11 +46,14 @@ class TranscriptionStream():
 
     def _transcribe_audio(self, audio_file):
         # try:
-            transcript = openai.Audio.transcribe("whisper-1", file=audio_file)
+            transcript = openai.Audio.transcribe("whisper-1", file=audio_file)["text"]
             del audio_file
-            self.transcription_log.append(transcript["text"])
-            print("Writing to arduino:", transcript["text"])
-            self.arduino_sender.write_to_arduino(content=transcript["text"] + " ")
+            self.transcription_log.append(transcript)
+            if self.translator != None:
+                transcript = self.translator.translate(transcript)
+            transcript.replace("\n", "")
+            print("Writing to arduino:", transcript)
+            self.arduino_sender.write_to_arduino(content=transcript + " ")
             return
 
         # except KeyboardInterrupt:
