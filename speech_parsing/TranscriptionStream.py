@@ -9,7 +9,7 @@ import time
 from ArduinoSend import ArduinoSend
 
 class TranscriptionStream():
-    def __init__(self, serial_port: str, baudrate= 9600, freq=44100, recording_duration=1, testing=False):
+    def __init__(self, serial_port: str, baudrate= 9600, freq=44100, recording_duration=5, testing=False):
         self.freq = freq
         self.recording_duration = recording_duration
         self.testing = testing
