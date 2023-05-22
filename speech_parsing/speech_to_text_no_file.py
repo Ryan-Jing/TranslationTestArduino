@@ -1,51 +1,53 @@
-# import sounddevice as sd
-# import datetime
-# import openai
-# import numpy as np
-
-# freq = 44100
-# duration = 3  # length of each audio file recording
-
-# print('Recording')
-
-# ts = datetime.datetime.now()
-# filename = ts.strftime("%Y-%m-%d %H:%M:%S")  # file names based on time
-
-# # Start recording given freq and duration
-# recording = sd.rec(int(duration * freq), samplerate=freq, channels=1)
-# sd.wait()
-
-# # Convert audio data to a byte array
-# audio_data = np.asarray(recording, dtype=np.int16)
-# audio_bytes = audio_data.tobytes()
-
-# # Transcribe the audio using OpenAI API
-# transcript = openai.Audio.transcribe("whisper-1", file=audio_bytes)
-# print(transcript)
-
 import sounddevice as sd
 import datetime
 import openai
-# import scipy.io.wavfile as wav
 import wavio
+import threading
 import io
+import time
 
-freq = 44100
-duration = 5  # length of each audio file recording
+FREQ = 44100
+DURATION = 5  # length of each audio file recording
+TESTING = True
 
-print('Recording')
+transcription_log = []
 
-ts = datetime.datetime.now()
-filename = ts.strftime("%Y-%m-%d %H:%M:%S")  # file names based on time
+def record_audio():
+    while True:
+        print('Recording')
 
-# Start recording given freq and duration
-recording = sd.rec(int(duration * freq), samplerate=freq, channels=1)
-sd.wait()
-wavfile = io.BytesIO()
-wavio.write(wavfile, data=recording, rate=freq, sampwidth=1)
-wavfile.seek(0)  # Rewind the file pointer to the beginning
-wavfile.name="in-memory-wav-file.wav"
+        if TESTING: 
+            audio_file = open("./test_audio_1.mp3", "rb")
+            time.sleep(5)
 
-# Transcribe the audio using OpenAI API
-transcript = openai.Audio.transcribe("whisper-1", file=wavfile)
-print(transcript)
+        else:
+            filename = "in_memory_file" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ".wav"
+
+            # Start recording given freq and duration
+            recording = sd.rec(int(DURATION * FREQ), samplerate=FREQ, channels=1)
+            sd.wait()
+            audio_file = io.BytesIO()
+            wavio.write(audio_file, data=recording, rate=FREQ, sampwidth=1)
+            audio_file.seek(0)  # Rewind the file pointer to the beginning
+            audio_file.name = filename # necessary for openai SDK to not throw an error
+
+        transcription_thread = threading.Thread(target=transcribe_audio, args=(audio_file,))
+        transcription_thread.start()
+
+def transcribe_audio(wavfile):
+    transcript = openai.Audio.transcribe("whisper-1", file=wavfile)
+    transcription_log.append(transcript["text"])
+    print(transcription_log)
+
+try:
+    recording_thread = threading.Thread(target=record_audio)
+    recording_thread.start()
+
+    while True:
+        pass
+
+except KeyboardInterrupt:
+    # Set the flag to signal thread termination
+    stop_threads = True
+    # Wait for all threads to finish
+    recording_thread.join()
