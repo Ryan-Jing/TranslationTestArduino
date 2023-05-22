@@ -5,16 +5,19 @@ import time
 ser = serial.Serial('/dev/cu.usbserial-210', 9600)  # Replace with the appropriate port
 file_path = 'transcriptions/transcriptions.txt'
 previous_word = ""
+counter = 0
 
 while True:
     with open(file_path, 'r') as file:
         content = file.read()
         result = content.split()
 
-    if result and result[-1] != previous_word:
+    # if result and result[-1] != previous_word:
+    if True:
         # send the new word using ser.write()
-        ser.write(result[-1].encode())
-        print("writing", result[-1])
+        ser.write((str(counter)+str(counter)).encode())
+        counter += 1
+        print("writing", counter)
     previous_word = result[-1]  # update previous_word
 
 
