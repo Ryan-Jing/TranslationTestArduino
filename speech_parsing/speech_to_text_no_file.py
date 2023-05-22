@@ -7,7 +7,7 @@ import io
 import time
 
 FREQ = 44100
-DURATION = 5  # length of each audio file recording
+DURATION = 10 # length of each audio file recording
 TESTING = True
 
 transcription_log = []

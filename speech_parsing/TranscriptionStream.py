@@ -9,7 +9,7 @@ import time
 from ArduinoSend import ArduinoSend
 
 class TranscriptionStream():
-    def __init__(self, serial_port: str, baudrate= 9600, freq=44100, recording_duration=5, testing=False):
+    def __init__(self, serial_port: str, baudrate= 9600, freq=44100, recording_duration=1, testing=False):
         self.freq = freq
         self.recording_duration = recording_duration
         self.testing = testing
@@ -17,8 +17,8 @@ class TranscriptionStream():
         self.arduino_sender = ArduinoSend(serial_port=serial_port, baudrate=baudrate)
 
     def _record_audio(self):
+        print('Recording audio...')
         while True:
-            print('Recording')
 
             if self.testing: 
                 audio_file = open("./test_audio_1.mp3", "rb")
@@ -40,8 +40,9 @@ class TranscriptionStream():
     def _transcribe_audio(self, wavfile):
         transcript = openai.Audio.transcribe("whisper-1", file=wavfile)
         self.transcription_log.append(transcript["text"])
-        print(self.transcription_log)
+        print("Writing to arduino:", transcript["text"])
         self.arduino_sender.write_to_arduino(content=transcript["text"])
+        return
 
     def run(self):
         try:
