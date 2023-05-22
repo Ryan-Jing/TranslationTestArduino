@@ -17,7 +17,7 @@ class TranscriptionStream():
         self.arduino_sender = ArduinoSend(serial_port=serial_port, baudrate=baudrate)
 
     def _record_audio(self):
-        try:
+        # try:
             print('Recording audio...')
             while True:
 
@@ -38,11 +38,11 @@ class TranscriptionStream():
                 transcription_thread = threading.Thread(target=self._transcribe_audio, args=(audio_file,))
                 transcription_thread.start()
         
-        except KeyboardInterrupt:
-            return
+        # except KeyboardInterrupt:
+        #     return
 
     def _transcribe_audio(self, audio_file):
-        try:
+        # try:
             transcript = openai.Audio.transcribe("whisper-1", file=audio_file)
             del audio_file
             self.transcription_log.append(transcript["text"])
@@ -50,8 +50,8 @@ class TranscriptionStream():
             self.arduino_sender.write_to_arduino(content=transcript["text"] + " ")
             return
 
-        except KeyboardInterrupt:
-            return
+        # except KeyboardInterrupt:
+        #     return
 
 
     def run(self):
@@ -63,8 +63,7 @@ class TranscriptionStream():
                 pass
 
         except KeyboardInterrupt:
-            # Set the flag to signal thread termination
             stop_threads = True
             # Wait for all threads to finish
-            recording_thread.join()
             self.arduino_sender.ser.close()
+            recording_thread.join()
