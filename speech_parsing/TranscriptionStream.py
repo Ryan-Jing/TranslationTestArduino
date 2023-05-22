@@ -17,32 +17,42 @@ class TranscriptionStream():
         self.arduino_sender = ArduinoSend(serial_port=serial_port, baudrate=baudrate)
 
     def _record_audio(self):
-        print('Recording audio...')
-        while True:
+        try:
+            print('Recording audio...')
+            while True:
 
-            if self.testing: 
-                audio_file = open("./test_audio_1.mp3", "rb")
-                time.sleep(5)
+                if self.testing: 
+                    audio_file = open("./test_audio_1.mp3", "rb")
+                    time.sleep(5)
 
-            else:
-                filename = "in_memory_file" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ".wav"
-                # Start recording given freq and duration
-                recording = sd.rec(int(self.recording_duration * self.freq), samplerate=self.freq, channels=1)
-                sd.wait()
-                audio_file = io.BytesIO()
-                wavio.write(audio_file, data=recording, rate=self.freq, sampwidth=1)
-                audio_file.seek(0)  # Rewind the file pointer to the beginning
-                audio_file.name = filename # necessary for openai SDK to not throw an error
+                else:
+                    filename = "in_memory_file" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ".wav"
+                    # Start recording given freq and duration
+                    recording = sd.rec(int(self.recording_duration * self.freq), samplerate=self.freq, channels=1)
+                    sd.wait()
+                    audio_file = io.BytesIO()
+                    wavio.write(audio_file, data=recording, rate=self.freq, sampwidth=1)
+                    audio_file.seek(0)  # Rewind the file pointer to the beginning
+                    audio_file.name = filename # necessary for openai SDK to not throw an error
 
-            transcription_thread = threading.Thread(target=self._transcribe_audio, args=(audio_file,))
-            transcription_thread.start()
+                transcription_thread = threading.Thread(target=self._transcribe_audio, args=(audio_file,))
+                transcription_thread.start()
+        
+        except KeyboardInterrupt:
+            return
 
-    def _transcribe_audio(self, wavfile):
-        transcript = openai.Audio.transcribe("whisper-1", file=wavfile)
-        self.transcription_log.append(transcript["text"])
-        print("Writing to arduino:", transcript["text"])
-        self.arduino_sender.write_to_arduino(content=transcript["text"])
-        return
+    def _transcribe_audio(self, audio_file):
+        try:
+            transcript = openai.Audio.transcribe("whisper-1", file=audio_file)
+            del audio_file
+            self.transcription_log.append(transcript["text"])
+            print("Writing to arduino:", transcript["text"])
+            self.arduino_sender.write_to_arduino(content=transcript["text"] + " ")
+            return
+
+        except KeyboardInterrupt:
+            return
+
 
     def run(self):
         try:
@@ -57,3 +67,4 @@ class TranscriptionStream():
             stop_threads = True
             # Wait for all threads to finish
             recording_thread.join()
+            self.arduino_sender.ser.close()
