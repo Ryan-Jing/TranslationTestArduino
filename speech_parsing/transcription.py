@@ -1,3 +1,4 @@
+#NOT IN USE ATM
 import config
 import whisper
 import os, glob
